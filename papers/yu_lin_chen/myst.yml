@@ -1,0 +1,91 @@
+version: 1
+project:
+  id: scipy-2026-qgis_llm_localization
+  title: 'Toward Reliable Localization of Free and Open Source Software: LLM-assisted Translation Workflows for QGIS'
+  description: A validation-first Python workflow for using LLMs to assist Qt .ts localization, with a QGIS Traditional Chinese case study, deterministic structural validation, and reviewable open-source artifacts.
+  authors:
+  - name: Yu-Lin Chen
+    email: aswendy062666@gmail.com
+    affiliations:
+    - National Sun Yat-sen University, Taiwan
+    corresponding: true
+  - name: Tyng-Ruey Chuang
+    email: trc@iis.sinica.edu.tw
+    affiliations:
+    - Institute of Information Science, Academia Sinica, Taiwan
+    - Research Center for Humanities and Social Sciences, Academia Sinica, Taiwan
+    - Research Center for Information Technology Innovation, Academia Sinica, Taiwan
+  - name: Cheng-Jen Lee
+    email: u103133.u103135@gmail.com
+    affiliations:
+    - Institute of Information Science, Academia Sinica, Taiwan
+  keywords:
+  - QGIS
+  - localization
+  - large language models
+  - validation
+  - Qt Linguist
+  - open source software
+  - translation memory
+  - terminology management
+  - machine translation
+  - software engineering
+  - Traditional Chinese
+  - geographic information systems
+  - reproducible workflows
+  abbreviations:
+    FOSS: Free and Open Source Software
+    GIS: Geographic Information Systems
+    HTML: HyperText Markup Language
+    LCS: Longest Common Subsequence
+    LLM: Large Language Model
+    QM: Qt Message file
+    RAG: Retrieval-Augmented Generation
+    TS: Translation Source
+    XML: Extensible Markup Language
+    API: Application Programming Interface
+    BLEU: Bilingual Evaluation Understudy
+    CSV: Comma-Separated Values
+    MT: Machine Translation
+    MQM: Multidimensional Quality Metrics
+    ODS: OpenDocument Spreadsheet
+    TER: Translation Edit Rate
+    UI: User Interface
+    URL: Uniform Resource Locator
+  error_rules:
+  - rule: doi-exists
+    severity: ignore
+    keys:
+    - qgis_home
+    - qgis_translation_guidelines
+    - qt_ts_format
+    - qt_translating_strings
+    - qgis_llm_book_readme
+    - qgis_llm_book_overview
+    - qgis_llm_book_guide
+    - depositar_lab_2026
+    - sinica_gis_2026
+    - sinica_qgis_translation_2018
+    - scipy2026_talk
+    - pyodide
+    - lewis2020rag
+    - esselink2000localization
+    - ohagan2011community
+    - somers2003translation
+    - snover2006ter
+    - lommel2014mqm
+    - hendy2023good
+    - jiao2023chatgpt
+    - perez2025scipy_proceedings
+    - head2025jupyterbook2
+    - vaswani2017attention
+  exports:
+  - id: pdf
+    format: typst
+    template: https://github.com/curvenote-templates/scipy.git
+    article: main.md
+    output: full_text.pdf
+  bibliography:
+  - mybib.bib
+site:
+  template: book-theme
