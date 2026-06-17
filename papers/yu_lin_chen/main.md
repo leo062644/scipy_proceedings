@@ -468,7 +468,7 @@ The complete corpus result confirms that the subset finding scales to the comple
 
 ## 7. Reproducibility and Artifact Availability
 
-The accompanying repository is available at <https://github.com/wendy062644/qgis-llm-localization-workflow>. A versioned release tag will be archived for the final proceedings version. The artifact is organized around three reproducibility levels so that reviewers can distinguish no-key rule-based checks from costlier model reruns.
+The accompanying reproducibility artifact is available in the [qgis-llm-localization-workflow repository](https://github.com/wendy062644/qgis-llm-localization-workflow). The current repository version contains the scripts, configurations, archived outputs, and evaluation reports needed to reproduce the paper's analyses.
 
 **Table 5. Reproducibility levels.**
 
@@ -532,11 +532,3 @@ Generative AI was used for English wording and formatting assistance. The author
 ## Funding
 
 This research is supported in part by an Academia Sinica Thematic Project grant (no. AS-TP-114-L01; _Sound Atlas: Mapping the Changing Terrestrial, Marine, and Cultural Soundscapes for a Sustainable Island Social-Ecological System_) and a grant from the National Science and Technology Council of Taiwan (no. NSTC 114-2621-M-001-001; _Advancing Research Data Infrastructures and Management Practices: Tools, Services, and Communities_).
-
-
----
-
-## References
-
-```{bibliography}
-```
