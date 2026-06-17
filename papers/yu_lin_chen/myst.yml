@@ -59,19 +59,19 @@ project:
     TER: Translation Edit Rate
     UI: User Interface
     URL: Uniform Resource Locator
-    error_rules:
-      - rule: doi-exists
-        severity: ignore
-        keys:
-          - qt_ts_format
-          - qgis_translation_guidelines
-          - google_structured_outputs
-          - xai_structured_outputs
-          - mqm_what_is
-          - google_gemini_flash_lite_api
-          - xai_grok_43
-          - taide_gemma3_12b_2602
-          - google_gemma3_12b_pt
+  error_rules:
+    - rule: doi-exists
+      severity: ignore
+      keys:
+        - qt_ts_format
+        - qgis_translation_guidelines
+        - google_structured_outputs
+        - xai_structured_outputs
+        - mqm_what_is
+        - google_gemini_flash_lite_api
+        - xai_grok_43
+        - taide_gemma3_12b_2602
+        - google_gemma3_12b_pt
   exports:
     - id: pdf
       format: typst
