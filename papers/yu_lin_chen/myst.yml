@@ -59,33 +59,19 @@ project:
     TER: Translation Edit Rate
     UI: User Interface
     URL: Uniform Resource Locator
-  error_rules:
+    error_rules:
     - rule: doi-exists
       severity: ignore
       keys:
-        - qgis_home
-        - qgis_translation_guidelines
         - qt_ts_format
-        - qt_translating_strings
-        - qgis_llm_book_readme
-        - qgis_llm_book_overview
-        - qgis_llm_book_guide
-        - depositar_lab_2026
-        - sinica_gis_2026
-        - sinica_qgis_translation_2018
-        - scipy2026_talk
-        - pyodide
-        - lewis2020rag
-        - esselink2000localization
-        - ohagan2011community
-        - somers2003translation
-        - snover2006ter
-        - lommel2014mqm
-        - hendy2023good
-        - jiao2023chatgpt
-        - perez2025scipy_proceedings
-        - head2025jupyterbook2
-        - vaswani2017attention
+        - qgis_translation_guidelines
+        - google_structured_outputs
+        - xai_structured_outputs
+        - mqm_what_is
+        - google_gemini_flash_lite_api
+        - xai_grok_43
+        - taide_gemma3_12b_2602
+        - google_gemma3_12b_pt
   exports:
     - id: pdf
       format: typst
