@@ -9,24 +9,24 @@ bibliography:
 
 Localization for free and open source software requires more than fluent target-language text. In Qt `.ts` files, translations must remain valid software resources: runtime placeholders, markup, escaped entities, line breaks, plural forms, terminology, XML structure, and message metadata must be preserved or handled according to explicit rules. This paper presents a Python workflow that uses LLMs to support localization of Qt Translation Source (`.ts`) files, using QGIS Traditional Chinese localization as a case study. A Python script segments each source string into translatable human-language spans and protected format-control tokens such as placeholders, markup, entities, and line breaks. The LLM translates only the human-language spans, while Python reinserts the protected tokens and validates the reassembled result. The workflow supports both cloud-based and local LLMs.
 
-Experiments based on several translation strategies on a fixed stratified subset of 3,000 messages, as well as complete-corpus experiments on all 28,924 QGIS source messages, have demonstrated various trade-offs in LLM-assisted translation automation. Direct-generation settings that send the full set of source strings to the language models, including variants with glossary hints and multiple generated candidates, can achieve lower MQM error rates but still suffer from non-zero rates of structural failure. In contrast, our production workflow—masked template translation with glossary hints and top-three generated candidates per message—produces zero observed failures on the complete corpus for all three evaluated LLM backends: Grok, Gemini, and TAIDE. This work therefore contributes not an LLM leaderboard or a method to improve linguistic quality of translation, but a reproducible workflow for making software localization with LLMs safer and auditable.
+Experiments based on several translation strategies on a fixed stratified subset of 3,000 source messages, as well as complete-corpus experiments on all 28,924 QGIS source messages, have demonstrated various trade-offs in LLM-assisted translation automation. Direct-generation settings that send the full set of source strings to the language models, including variants with glossary hints and multiple generated candidates, can achieve lower MQM error rates but still suffer from non-zero rates of structural failure. In contrast, our production workflow—masked template translation with glossary hints and top-three generated candidates per message—produces zero observed failures on the complete corpus for all three evaluated LLM backends: Grok, Gemini, and TAIDE. This work therefore contributes not an LLM leaderboard or a method to improve linguistic quality of translation, but a reproducible workflow for making software localization with LLMs safer and auditable.
 
 ---
 
 ## 1. Introduction
 
-Localization quality is a practical barrier to the adoption of scientific software. A localized interface must do more than translate the message strings: it must use clear language, keep terms consistent, and preserve software formatting rules. Taking QGIS, a widely used free and open-source geographic information system [@qgis_software; @graser2025_qgis], as an example, untranslated strings, untranslated residual English, inconsistent GIS terms, and broken placeholders or markup can make the localized interface harder to use and reduce users' trust in the software.
+Localization quality is a practical barrier to the adoption of scientific software. A localized interface must do more than translate the message strings: it must use clear language, keep terms consistent, and preserve software formatting rules. Taking QGIS, a widely used free and open-source geographic information system [@qgis_software; @graser2025_qgis], as an example, untranslated residual English strings, inconsistent GIS terms, and broken placeholders or markup can make the localized interface harder to use and reduce users' trust in the software.
 
-LLMs can assist localization, but software localization is not merely document translation. A Qt `.ts` file is an XML-based localization resource containing source strings, translations, contexts, locations, message states, plural forms, and translator metadata. User-visible strings may contain runtime placeholders such as `%1` and `%n`, brace placeholders such as `{0}` or `{feature_id}`, Qt mnemonic markers for Alt-key shortcuts such as `&File`, HTML-like markup, escaped entities, numeric tokens, and significant whitespace. A translation that looks acceptable in plain-text review may still be release-blocking if it violates format constraints—for example, by omitting `%1`, altering a `<b>...</b>` pair, removing a required line break, or using an incorrect GIS term.
+LLMs can assist localization, but software localization is not merely document translation. A Qt `.ts` file is an XML-based localization resource containing source strings, translations, contexts, locations, message states, plural forms, and translator metadata. User-visible strings may contain runtime placeholders such as `%1` and `%n`, brace placeholders such as `{0}` or `{feature_id}`, Qt mnemonic markers for Alt-key shortcuts such as `&File`, HTML-like markup, escaped entities, numeric tokens, and significant whitespace. A translation that looks acceptable in plain-text review may still be release-blocking if it violates format constraints—for example, by omitting `%1`, altering a `<b>...</b>` pair, removing a required line break, or using an incorrect GIS term in the target language.
 
-This paper presents a validation-first workflow for QGIS localization with LLM support, where generated translations are not trusted simply because they are language model outputs. A translation is accepted only if Python confirms that the reassembled `.ts` message is well-formed XML and passes all blocking format-preservation checks; afterward, the localized message is logged for human review rather than silently treated as being completed. The central claim of our work is not that LLMs will replace human translators. Rather, we see LLMs being placed inside a reviewable Python workflow to help software localization efforts where rule-based validation protects software structural integrity, project glossaries provide terminology guidance, LLM judges scale linguistic quality review, and human reviewers oversee the entire process and retain final responsibility.
+This paper presents a validation-first workflow for QGIS localization with LLM support, where generated translations are not trusted simply because they are language model outputs. A translation is accepted only if the Python workflow confirms that the reassembled `.ts` message is well-formed XML and passes all blocking format-preservation checks; afterward, the localized message is logged for human review rather than silently marked as complete. The central claim of our work is not that LLMs will replace human translators. Rather, we see LLMs being placed inside a reviewable Python workflow to help software localization efforts where rule-based validation protects software structural integrity, project glossaries provide terminology guidance, LLM judges scale up linguistic quality review, and human reviewers oversee the entire process and retain final responsibility.
 
 The workflow is intentionally not tied to one LLM backend. Translation can be performed through cloud models or local models. This matters for FOSS communities because contributors may prefer local inference for cost, privacy, offline processing, or reproducibility, while others may use cloud models for higher translation quality or better support for JSON-style structured responses. The paper therefore evaluates our proposed workflow across several models.
 
 **Contributions.** This paper makes four contributions:
 
 1. A compact validation-first Python workflow for QGIS `.ts` localization with LLM support.
-2. A structure-preserving template translation method in which LLMs translate only human-language spans while Python scripts preserve and protect format-control tokens and re-assemble the translated messages by rules.
+2. A structure-preserving template translation method in which LLMs translate only human-language spans while Python scripts preserve and protect format-control tokens and reassemble the translated messages by rules.
 3. A shared backend interface for both cloud-based and local LLMs, enabling the same workflow to run, for example, with Gemini, Grok, and a local TAIDE-family model.
 4. A reproducible evaluation protocol using fixed subsets, rule-based structural checks, terminology diagnostics, production runs on the complete corpus, as well as a sampled evaluation of semantic quality of the end results using MQM.
 
@@ -36,7 +36,7 @@ The workflow is intentionally not tied to one LLM backend. Translation can be pe
 
 ### 2.1 Software localization as structured data transformation
 
-The Qt Linguist TS format (`.ts`) is not a plain-text file format only for natural language translation. Instead, it is an XML-based file format described by an XML Schema Definition (XSD), which specifies the permitted structure and elements of the XML document, and its message records may contain message type, source text, translation text, context, locations, comments, and plural forms [@qt_ts_format]. This makes `.ts` localization closer to a transformation of structured data with explicit constraints than to unconstrained natural-language translation.
+The Qt Linguist TS format (`.ts`) is not a plain-text file format only for natural language translation. Instead, it is an XML-based file format described by an XML Schema Definition (XSD), which specifies the permitted structure and elements of the XML document, and its message records may contain message type, source text, translation text, context, locations, comments, and plural forms [@qt_ts_format]. This makes `.ts` localization closer to a transformation of structured data with explicit constraints than to unconstrained natural language translation.
 
 In this setting, a localization workflow should distinguish between:
 
@@ -49,7 +49,7 @@ A generic LLM prompt that treats the source as plain text may produce readable t
 
 ### 2.2 QGIS terminology and Traditional Chinese localization
 
-QGIS localization is domain-specific. Terms such as `layer`, `feature`, `raster`, `vector`, `CRS`, `geometry`, `attribute table`, and `processing algorithm` must be handled consistently after translation (in our case, into Traditional Chinese) across their occurrences in menus, processing tools, database modules, and error messages. Generic LLM translation may produce fluent output while the terms are drifting across terminology variants.
+QGIS localization is domain-specific. Terms such as `layer`, `feature`, `raster`, `vector`, `CRS`, `geometry`, `attribute table`, and `processing algorithm` must be handled consistently after translation (in our case, into Traditional Chinese) across their occurrences in menus, processing tools, database modules, and error messages. Generic LLM translation may produce fluent output while terms drift across terminology variants.
 
 To reduce this drift, the workflow uses a glossary-assisted retrieval approach, in which relevant entries from a GIS glossary are retrieved as reference hints for generation. Glossary entries are not used as mechanical replacement rules because GIS terms often appear in derived or compound forms. For example, `raster`, `raster layer`, `rasterize`, and `rasterization` may require different Traditional Chinese expressions. Therefore, the workflow retrieves glossary hints, includes them in the prompt, and validates output after generation rather than enforcing direct string substitution.
 
@@ -96,7 +96,7 @@ The rule-based and glossary layers are applied uniformly across all model backen
 | TAIDE | Local | `taide/Gemma-3-TAIDE-12b-Chat-2602` | Local translation backend |
 ```
 
-Model-version details are kept out of {numref}`tab-model-backends` to reduce space. Gemini and Grok are cloud backends with support for structured outputs [@google_gemini_flash_lite_api; @google_structured_outputs; @xai_grok_43; @xai_structured_outputs]. The TAIDE backend is a Hugging Face Hub checkpoint whose model card states that it is based on `google/gemma-3-12b-pt`; the base Gemma 3 12B pre-trained checkpoint and Gemma 3 technical report provide the relevant Gemma 3 model context [@taide_gemma3_12b_2602; @google_gemma3_12b_pt; @gemma3_technical_report]. Because cloud model aliases and model repositories can change over time, the reproducibility artifact, as explained in {ref}`sec-reproducibility-artifact`, records the API request dates and prompt versions, as well as the local checkpoint revision, download date, license terms, inference engine, quantization details, GPU model, VRAM size, and decoding settings.
+Model version details are kept out of {numref}`tab-model-backends` to reduce space. Gemini and Grok are cloud backends with support for structured outputs [@google_gemini_flash_lite_api; @google_structured_outputs; @xai_grok_43; @xai_structured_outputs]. The TAIDE backend is a Hugging Face Hub checkpoint whose model card states that it is based on `google/gemma-3-12b-pt`; the base Gemma 3 12B pre-trained checkpoint and Gemma 3 technical report provide the relevant Gemma 3 model context [@taide_gemma3_12b_2602; @google_gemma3_12b_pt; @gemma3_technical_report]. Because cloud model aliases and model repositories can change over time, the reproducibility artifact, as explained in {ref}`sec-reproducibility-artifact`, records the API request dates and prompt versions, as well as the local checkpoint revision, download date, license terms, inference engine, quantization details, GPU model, VRAM size, and decoding settings.
 
 ### 3.2 A model of translation units and token sequences
 
@@ -188,7 +188,7 @@ The model is asked to translate only the text spans and may return JSON such as:
 }
 ```
 
-Python then restores the protected tokens by rule. Placeholders and line breaks are restored in place. The Qt mnemonic marker is restored as a suffix at the end of the translated label:
+Python code then restores the protected tokens by rule. Placeholders and line breaks are restored in place. The Qt mnemonic marker is restored as a suffix at the end of the translated label:
 
 ```text
 開啟屬性表(&A)
@@ -279,7 +279,7 @@ Glossary hints are passed to the LLM as contextual guidance, not mechanical repl
 
 ### 3.5 Candidate selection
 
-Each segment may produce multiple candidate translations. The default production condition will generate three candidates. A Python script reassembles each candidate, validates it, and selects the best candidate by a rule-based quality-risk score:
+Each segment may produce multiple candidate translations. The default production condition generates three candidates. A Python script reassembles each candidate, validates it, and selects the best candidate by a rule-based quality-risk score:
 
 $$
 Q(\hat{t}) = \sum_{e \in E(\hat{t})} w(severity(e)) + \lambda_1 R_{latin}(\hat{t}) + \lambda_2 R_{len}(s,\hat{t}).
@@ -295,7 +295,7 @@ $$
 
 Here, $\hat{t}_{u,j}$ is the $j$-th candidate for translation unit $u$, and $E_{blocking}(\hat{t}_{u,j})$ is the subset of validation issues that block automatic acceptance.
 
-If no generated candidate passes strict validation, the translation unit is logged for review rather than automatically accepted. This review state is not used as a key quality metric because it may have several operational causes: no valid candidate, backend exception, malformed JSON, or intentionally conservative rejection. Detailed review-state counts are reported in the accompanying reproducibility artifact. This paper, however, focuses only on structural failure rate, rule-based content and completion diagnostics, and MQM semantic quality.
+If no generated candidate passes strict validation, the translation unit is logged for review rather than automatically accepted. This review state is not used as a key quality metric because it may have several operational causes: no valid candidate, backend exception, malformed JSON, or intentionally conservative rejection. Detailed review-state counts are reported in the accompanying reproducibility artifact. This paper, however, focuses only on structural failure rate, rule-based form and content completeness diagnostics, and MQM semantic quality.
 
 ### 3.6 Guarantee boundary of translation validation
 
@@ -309,10 +309,10 @@ If a token class is not defined by the extractor, it is outside the guarantee bo
 
 ### 3.7 Workflow procedure
 
-The procedure is summarized below in MyST-friendly pseudocode. Full implementation details are in the code repository.
+The procedure is summarized below in pseudocode. Full implementation details are in the code repository.
 
 ```text
-Input:  Qt TS file S, glossaries G, backend b, condition C
+Input: Qt TS file S, glossaries G, backend b, condition C
 Output: translated TS file, translation log, rule-based reports
 
 U <- parse_ts(S)
@@ -357,7 +357,7 @@ Our implementation is a Python command-line workflow. The main runner builds fix
 | C4 (Single candidate)  | yes | yes | 1 | Tests the value of generating multiple candidates |
 ```
 
-C0--C4 are experimental conditions for the same workflow over a fixed stratified subset of 3,000 message segments. Our evaluation on the complete corpus focuses only on C1, however, as it performs better than others over the fixed subset of 3,000 messages. Scaling all experimental conditions to the complete corpus would primarily increase cost and review burden rather than change our deployment priority: whether the selected production workflow will remain structurally safe in order to release to the QGIS Traditional Chinese user community.
+C0--C4 are experimental conditions for the same workflow over a fixed stratified subset of 3,000 message segments. Our evaluation on the complete corpus focuses only on C1, however, as it performs better than others over the fixed subset of 3,000 messages. Scaling up all experimental conditions to the complete corpus would primarily increase cost and review burden rather than change our deployment priority: whether the selected production workflow will remain structurally safe in order to release to the QGIS Traditional Chinese user community.
 
 ### 4.1 Direct generation and residual risk
 
@@ -365,7 +365,7 @@ A natural question is whether stronger prompting is sufficient. C0 and C2 should
 
 ### 4.2 Validation fixtures and smoke tests
 
-Our artifact includes a bundled mini evaluation fixture for exercising the rule-based layer. The fixture contains archived 100-segment C0--C4 .ts outputs, condition metadata, selected-segment metadata, and evaluation outputs. The default reproduction will rerun the rule-based evaluator and scoring scripts on these archived .ts files, so that token checks, accelerator handling, XML well-formedness checks, condition comparison, scoring behavior, MQM request planning, and table generation can be verified without calling any model API.
+Our artifact includes a bundled mini evaluation fixture for exercising the rule-based layer. The fixture contains archived 100-segment C0--C4 .ts outputs, condition metadata, selected-segment metadata, and evaluation outputs. The default reproduction will rerun the rule-based evaluator and scoring scripts on these archived `.ts` files, so that token checks, accelerator handling, XML well-formedness checks, condition comparison, scoring behavior, MQM request planning, and table generation can be verified without calling any model API.
 
 The fixture is not presented as a full regeneration of the paper experiments: it does not rerun LLM translation, candidate generation, glossary-assisted prompting, or token reassembly during generation. Those steps are covered by the workflow scripts and can be exercised through optional cloud/local LLM reruns, while the default reproduction path provides a stable offline check of the rule-based evaluation and reporting code path.
 
@@ -425,9 +425,9 @@ A value near zero indicates no material semantic penalty; a small positive value
 
 ### 6.1 Pairwise experimental condition comparison: structural safety and semantic quality trade-off
 
-The full outputs of the C0--C4 experimental conditions over the 3,000-segment subset are archived in the accompanying reproducibility artifact. {numref}`tab-subset-comparison` reports the four conditions central to the main trade-off comparison: C0 direct baseline, C1 complete workflow, C2 direct generation with glossary hints, and C4 single-candidate masked workflow. C3 is omitted from the compact table because it mainly isolates the glossary component; it is included in the artifact and does not show a distinct structural failure pattern. The ± values report repeated-judge variability from the MQM evaluation script.
+The full outputs of the C0--C4 experimental conditions over the 3,000-segment subset are archived in the accompanying reproducibility artifact. {numref}`tab-subset-comparison` reports the four conditions central to the main trade-off comparison: C0 direct (which is the baseline), C1 complete workflow, C2 direct generation with glossary hints, and C4 single-candidate masked workflow. C3 is omitted from the table because it mainly isolates the glossary component; however, it is included in the artifact and does not show a distinct structural failure pattern. In the table, MQM-ER is reported as mean ± approximate 95% confidence-interval half-width over repeated MQM judge runs. `Rule QA` abbreviates rule-based content completeness QA, an engineering diagnostic rather than a translation quality score.
 
-```{table} Comparison summary on the 3,000-segment subset. `Rule QA` abbreviates rule-based content completeness QA, an engineering diagnostic rather than a translation quality score.
+```{table} Comparison summary on the 3,000-segment subset.
 :name: tab-subset-comparison
 
 | Backend | Cond. | Short name | Structure failure % ↓ | Rule QA ↑ | MQM-ER ↓ |
@@ -460,7 +460,7 @@ For cloud backends, the effect is small. Relative to C4, C1 improves rule-based 
 
 Complete-corpus C1 experiments were run on all 28,924 QGIS source messages for each backend. We select C1 for our production workflow: masking, glossary hints from tabular resources, and top-three candidates.
 
-Structure score is reported on a 0--100 scale as 100 minus the structural failure percentage. Rule QA is an aggregate rule-based diagnostic score combining completion, untranslated-text, forbidden-term, and glossary-target checks. Possibly untranslated counts segments flagged by the rule-based detector as retaining substantial source-language residue.
+Structure score is reported on a 0--100 scale as 100 minus the structural failure percentage. Rule QA is an aggregate rule-based diagnostic score combining completeness, untranslated-text, forbidden-term, and glossary-target checks. Possibly untranslated counts segments flagged by the rule-based detector as retaining substantial source-language residue.
 
 ```{table} Comparing the three LLMs under the production condition C1.
 :name: tab-complete-corpus-c1
@@ -472,7 +472,7 @@ Structure score is reported on a 0--100 scale as 100 minus the structural failur
 | TAIDE 12B | 28,924 | 0.00 | 100.000 | 65.13 | 2.052 | 6,674 (23.07%) |
 ```
 
-The complete-corpus result confirms that the subset finding scales to the complete QGIS Qt source file: all three backends produce zero observed structural failures under C1 for the token classes we have checked. The local TAIDE backend is structurally safe under the workflow, but its rule-based content completeness QA is much lower. This indicates that the local backend is a viable offline deployment path for structural preservation, while requiring substantially more review efforts than the other two cloud backends.
+The complete-corpus result confirms that the subset finding scales up to the complete QGIS Qt source file: all three backends produce zero observed structural failures under C1 for the token classes we have checked. The local TAIDE backend is structurally safe under the workflow, but its rule-based content completeness QA is much lower. This indicates that the local backend is a viable offline deployment path for structural preservation, while requiring substantially more review efforts than the other two cloud backends.
 
 ---
 
@@ -491,13 +491,13 @@ The accompanying reproducibility artifact is available in the [qgis-llm-localiza
 | Optional MQM or translation rerun | `python scripts/run_repro.py mqm ... --run-grok`; `python scripts/run_repro.py translate ...` | Yes | Rebuilds MQM judge outputs or regenerates a small translation test run using cloud AI credentials or local inference. |
 ```
 
-The default mini rule-based evaluation is reviewer friendly and offline. It uses the same C0--C4 condition definitions and the same rule-based evaluator/scorer as this paper's experiments, but on a smaller 100-segment archived-output fixture so that it can run quickly. It should be interpreted as an executable validation of the rule-based evaluation, scoring, comparison, and request-planning code paths, not as a full regeneration of LLM translation outputs or as a substitute for the 3,000-segment and 28,924-message experimental artifacts.
+The default mini rule-based evaluation is reviewer friendly and can be used offline. It uses the same C0--C4 condition definitions and the same rule-based evaluator/scorer as this paper's experiments, but on a smaller 100-segment archived-output fixture so that it can run quickly. It should be interpreted as an executable validation of the rule-based evaluation, scoring, comparison, and request-planning code paths, not as a full regeneration of LLM translation outputs or as a substitute for the 3,000-segment and 28,924-message experimental artifacts.
 
 The compact release contains the mini fixture, source `.ts` file, tabular glossary resources used in the experiments, C0--C4 configuration files, workflow scripts, archived demo `.ts` outputs, workflow manifests, rule-based evaluation outputs, MQM request-planning outputs, and an `.env.example` file. The final proceedings artifact includes artifacts for table values of the reported 3,000-segment C0--C4 condition comparison, complete-corpus C1 comparison, and MQM summaries. Full-scale output for recomputation is provided through a larger extended experiment archive containing the generated `.ts` outputs for the reported 3,000-segment C0--C4 condition comparison and the 28,924-message C1 runs. With that archive, the same scoring command recomputes rule-based metrics from archived outputs without new model calls. Rerunning translation or MQM judging requires the appropriate cloud LLM API credentials or local inference hardware. API keys are excluded from the repository and are supplied through environment variables such as `XAI_API_KEY` and `GEMINI_API_KEY`.
 
-In addition to the reproducibility artifact, the released Traditional Chinese localization files are deposited as public datasets in [depositar](https://data.depositar.io/), a public repository for research datasets, with persistent ARK identifiers. The released datasets include the QGIS 4.0 zh-Hant Translation Dataset (TS/QM Files), identified by `ark:37281/k5f167n46` and available at <https://pid.depositar.io/ark:37281/k5f167n46>, and the Long Term Release QGIS 3.44 zh-Hant Translation Dataset (TS/QM Files), identified by `ark:37281/k5g11462n` and available at <https://pid.depositar.io/ark:37281/k5g11462n>. These deposits provide persistent access to the released translation files, while the repository artifact described above contains the scripts, configurations, archived outputs, and evaluation reports needed to reproduce this paper's analyses.
+In addition to the reproducibility artifact, the released Traditional Chinese localization files are deposited as public datasets in [depositar](https://data.depositar.io/), a public repository for research datasets, with persistent ARK identifiers. The released datasets include the QGIS 4.0 zh-Hant Translation Dataset (TS/QM Files), identified by `ark:37281/k5f167n46` and available at <https://pid.depositar.io/ark:37281/k5f167n46>, and the Long Term Release QGIS 3.44 zh-Hant Translation Dataset (TS/QM Files), identified by `ark:37281/k5g11462n` and available at <https://pid.depositar.io/ark:37281/k5g11462n>. These deposits provide persistent access to the released translation files, while the code repository artifact described above contains the scripts, configurations, archived outputs, and evaluation reports needed to reproduce this paper's analyses.
 
-The repository README documents the quickstart, rule-based scoring, MQM request planning, optional MQM judge run, and optional API translation test run.
+The code repository README documents the quickstart, rule-based scoring, MQM request planning, optional MQM judge run, and optional API translation test run.
 
 ---
 
@@ -505,9 +505,9 @@ The repository README documents the quickstart, rule-based scoring, MQM request 
 
 Our proposed workflow improves reliability by separating structural safety, terminology guidance, semantic quality evaluation, and human review. The rule-based layer is the most objective because it checks formatting artifacts that should be preserved. The structure-preserving template layer strengthens this idea by removing protected tokens from the LLM generation space. Generating multiple candidates is a secondary robustness layer; it improves candidate availability, especially for the local backend, but it is not the mechanism that maintains structural safety under the implemented token extractors.
 
-The role of masking should be interpreted carefully. Masking does not solve semantic adequacy by itself, and the MQM results show a modest semantic cost for C1 compared with C0 and C2, the two conditions without masking. However, this is a different risk category from interface breakage. C0 and C2 provide evidence of residual risk under the implemented direct generation settings, not an exhaustive dismissal of all prompt-only approaches. C2 can be semantically stronger, but it still leaves non-zero structural failure rates in this experiment. In practical terms, masking trades a measured semantic cost for stronger structural reliability under the token classes we have checked.
+The role of masking should be interpreted carefully. Masking does not solve semantic adequacy by itself, and the MQM results show a modest semantic cost for C1 compared with C0 and C2, the two conditions without using masking. However, this is a different risk category from interface breakage. C0 and C2 provide evidence of residual risk under the implemented direct generation settings, not a complete dismissal of all prompt-only approaches. C2 can be semantically stronger, but it still leaves non-zero structural failure rates in this experiment. In practical terms, masking trades a measured semantic cost for stronger structural reliability under the token classes we have checked.
 
-The local LLM results should be read as evidence for deployability, not model superiority. TAIDE achieves the same zero observed structural failure result under C1, but its rule-based content completeness QA and review-workload indicators are much worse than the cloud backends. In the archived status diagnostics, 7,265 of 28,924 TAIDE C1 rows, or 25.12%, entered a review-required source-fallback state. This is not a fatal flaw for the workflow, because the workflow prevents those rows from being silently accepted as structurally valid localized content. It does mean that the local backend currently requires substantially more human review before release; in the present configuration, TAIDE should be treated as an offline deployment path with a larger review queue rather than as a drop-in substitute for the cloud backends.
+The local LLM results should be read as evidence for deployability, not model superiority. TAIDE achieves the same zero observed structural failure result under C1, but its rule-based content completeness QA and review-workload indicators are much worse than the cloud backends. In the archived status diagnostics, 7,265 of 28,924 TAIDE C1 rows, or 25.12%, entered a review-required fallback state. This is not a fatal flaw for the workflow, because the workflow prevents those rows from being silently accepted as structurally valid localized content. It does mean that using the local backend currently requires substantially more human review before release; in the present configuration, TAIDE should be treated as an offline deployment path with a larger review queue rather than as a drop-in substitute for the cloud backends.
 
 The glossary layer depends on glossary quality. Because glossary matches are hints rather than replacements, the workflow avoids many unnatural literal substitutions, but terminology correctness still requires evaluation.
 
@@ -540,7 +540,7 @@ The broader contribution of this research is methodological. Reliable FOSS local
 
 ## Acknowledgements and AI Disclosure
 
-Generative AI was used for English wording and formatting assistance. The authors verified the technical claims, references, experimental results, source code, and final manuscript text. LLM outputs used for translation or MQM-style judging are treated as assisted annotations, not the ground truth.
+Generative AI was used for English wording, formulation, and formatting assistance. The authors verified the technical claims, references, experimental results, source code, and final manuscript text. LLM outputs used for translation or MQM-style judging are treated as assisted annotations, not the ground truth.
 
 ## Funding
 

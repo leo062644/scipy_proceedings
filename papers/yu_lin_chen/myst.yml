@@ -1,4 +1,5 @@
 version: 1
+extends: ../papers.yml
 project:
   id: scipy-2026-qgis_llm_localization
   title: >
@@ -82,5 +83,3 @@ project:
       output: full_text.pdf
   bibliography:
     - mybib.bib
-site:
-  template: book-theme
