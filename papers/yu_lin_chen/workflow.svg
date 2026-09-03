@@ -18,7 +18,7 @@
 </defs>
 <rect x="130" y="0" width="1470" height="1150" fill="white"/>
 
-<text x="800.0" y="48" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" fill="#1F1F1F" text-anchor="middle" >Workflow for Qt .ts Localization</text>
+<text x="800.0" y="48" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" fill="#1F1F1F" text-anchor="middle" >Selected Masked Workflow for Qt .ts Localization</text>
 <rect x="245" y="70" width="1110" height="60" rx="12" fill="#F5F9FF" stroke="#0B57D0" stroke-width="2"/>
 <path d="M285 84 H312 L330 102 V120 H285 Z" fill="none" stroke="#0B57D0" stroke-width="3"/>
 <path d="M312 84 V102 H330" fill="none" stroke="#0B57D0" stroke-width="3"/>
@@ -41,10 +41,10 @@
 <circle cx="215" cy="285.0" r="27" fill="#0B57D0" stroke="none" stroke-width="0"/>
 <text x="215" y="294.0" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="white" text-anchor="middle" >2</text>
 <text x="275" y="278" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#1F1F1F" text-anchor="start">
-<tspan x="275" dy="0">Split each source string into TEXT spans and protected TOKEN spans</tspan>
+<tspan x="275" dy="0">Split source into TEXT/TOKEN spans; store mnemonic metadata separately</tspan>
 </text>
 <text x="275" y="307" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" fill="#4A4A4A" text-anchor="start">
-<tspan x="275" dy="0">Separate ordinary language text from placeholders, tags, and other protected elements</tspan>
+<tspan x="275" dy="0">Separate language from protected elements while retaining mnemonic information</tspan>
 </text>
 </g>
 <line x1="800" y1="330" x2="800" y2="350" stroke="#1F1F1F" stroke-width="2" marker-end="url(#arrow)"/>
@@ -76,7 +76,7 @@
 <rect x="170" y="545" width="1160" height="300" rx="12" fill="white" stroke="#0B57D0" stroke-width="2"/>
 <circle cx="215" cy="580" r="27" fill="#0B57D0" stroke="none" stroke-width="0"/>
 <text x="215" y="589" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="white" text-anchor="middle" >5</text>
-<text x="275" y="584" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#1F1F1F" text-anchor="start" >Reinsert protected tokens and select a structurally valid candidate</text>
+<text x="275" y="584" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#1F1F1F" text-anchor="start" >Restore tokens and mnemonics, validate candidates, and select an output</text>
 <rect x="250" y="610" width="405" height="58" rx="8" fill="#F5F9FF" stroke="#0B57D0" stroke-width="1.7"/>
 <path d="M278 625 H315 V650 H293 L282 660 V650 H278 Z" fill="none" stroke="#0B57D0" stroke-width="3"/>
 <circle cx="290" cy="638" r="2.5" fill="#0B57D0" stroke="none" stroke-width="0"/>
@@ -89,23 +89,23 @@
 <rect x="250" y="685" width="405" height="58" rx="8" fill="#F5F9FF" stroke="#0B57D0" stroke-width="1.7"/>
 <path d="M285 703 H302 C301 696,312 696,311 703 H324 V716 C317 715,317 727,324 726 V737 H309 C310 730,299 730,300 737 H285 Z" fill="#0B57D0" stroke="#0B57D0" stroke-width="1"/>
 <text x="335" y="709" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#1F1F1F" text-anchor="start">
-<tspan x="335" dy="0">Reinsert the protected tokens</tspan>
-<tspan x="335" dy="19.549999999999997">into each candidate</tspan>
+<tspan x="335" dy="0">Reinsert protected tokens and</tspan>
+<tspan x="335" dy="19.549999999999997">restore mnemonic metadata</tspan>
 </text>
 <rect x="250" y="760" width="405" height="58" rx="8" fill="#F5F9FF" stroke="#0B57D0" stroke-width="1.7"/>
 <path d="M301 772 L324 781 V797 C324 809,313 815,301 811 C289 815,278 809,278 797 V781 Z" fill="none" stroke="#0B57D0" stroke-width="3"/>
 <path d="M291 795 L298 802 L313 787" fill="none" stroke="#0B57D0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 <text x="335" y="784" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#1F1F1F" text-anchor="start">
 <tspan x="335" dy="0">Check each candidate for</tspan>
-<tspan x="335" dy="19.549999999999997">blocking structural issues</tspan>
+<tspan x="335" dy="19.549999999999997">validation issues</tspan>
 </text>
 <line x1="452.5" y1="668" x2="452.5" y2="685" stroke="#1F1F1F" stroke-width="2" marker-end="url(#arrow)"/>
 <line x1="452.5" y1="743" x2="452.5" y2="760" stroke="#1F1F1F" stroke-width="2" marker-end="url(#arrow)"/>
 <polygon points="830,635.0 960.0,710 830,785.0 700.0,710" fill="#FFF7E0" stroke="#F9AB00" stroke-width="2"/>
 <text x="830" y="685" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="#1F1F1F" text-anchor="middle">
 <tspan x="830" dy="0">Any candidate</tspan>
-<tspan x="830" dy="19.549999999999997">without blocking</tspan>
-<tspan x="830" dy="19.549999999999997">structural issues?</tspan>
+<tspan x="830" dy="19.549999999999997">without validation</tspan>
+<tspan x="830" dy="19.549999999999997">issues?</tspan>
 </text>
 <path d="M 655 789.0 H 675 V 710 H 700.0" fill="none" stroke="#1F1F1F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
 <rect x="1025" y="650" width="270" height="95" rx="10" fill="#E9F7EC" stroke="#137333" stroke-width="2"/>
@@ -113,8 +113,8 @@
 <path d="M1049 697.5 L1057 705.5 L1073 687.5" fill="none" stroke="#137333" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
 <text x="1095" y="683" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#1F1F1F" text-anchor="start">
 <tspan x="1095" dy="0">Select the lowest-risk</tspan>
-<tspan x="1095" dy="18.4">structurally valid</tspan>
-<tspan x="1095" dy="18.4">candidate and accept it</tspan>
+<tspan x="1095" dy="18.4">valid candidate and</tspan>
+<tspan x="1095" dy="18.4">record the output</tspan>
 </text>
 <path d="M 960.0 710 H 1015" fill="none" stroke="#1F1F1F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
 <text x="965" y="695" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#137333" text-anchor="middle" >Yes</text>
@@ -124,9 +124,9 @@
 <circle cx="965" cy="799.5" r="7" fill="white" stroke="none" stroke-width="0"/>
 <path d="M951 821.5 C955 809.5 975 809.5 979 821.5" fill="white"/>
 <text x="1000" y="799" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#1F1F1F" text-anchor="start">
-<tspan x="1000" dy="0">Mark the row for</tspan>
-<tspan x="1000" dy="19.2">human review and</tspan>
-<tspan x="1000" dy="19.2">log diagnostics</tspan>
+<tspan x="1000" dy="0">Use source fallback,</tspan>
+<tspan x="1000" dy="19.2">mark the row for review,</tspan>
+<tspan x="1000" dy="19.2">and log diagnostics</tspan>
 </text>
 </g>
 <path d="M 830 785.0 V 787.5 H 920" fill="none" stroke="#1F1F1F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>
