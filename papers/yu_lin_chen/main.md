@@ -357,7 +357,7 @@ Our implementation is a Python command-line workflow. The main runner builds fix
 | C4 (Single candidate)  | yes | yes | 1 | Tests the value of generating multiple candidates |
 ```
 
-C0--C4 are experimental conditions for the same workflow over a fixed stratified subset of 3,000 message segments. Our evaluation on the complete corpus focuses only on C1, however, as it performs better than others over the fixed subset of 3,000 messages. Scaling up all experimental conditions to the complete corpus would primarily increase cost and review burden rather than change our deployment priority: whether the selected production workflow will remain structurally safe in order to release to the QGIS Traditional Chinese user community.
+C0-C4 are experimental conditions for the same workflow over a fixed stratified subset of 3,000 message segments. Our evaluation on the complete corpus focuses only on C1, however, as it performs better than others over the fixed subset of 3,000 messages. Scaling up all experimental conditions to the complete corpus would primarily increase cost and review burden rather than change our deployment priority: whether the selected production workflow will remain structurally safe in order to release to the QGIS Traditional Chinese user community.
 
 ### Direct generation and residual risk
 
